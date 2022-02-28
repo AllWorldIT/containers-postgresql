@@ -24,6 +24,16 @@ fi
 if [ -f /var/lib/postgresql/data/PG_VERSION ]; then
 	chown -R postgres:postgres /var/lib/postgresql/data
 else
+	echo "NOTICE: Initializing settings"
+
+	# Check if we have stats enabled
+	if [ -n "$POSTGRES_TRACK_STATS" ]; then
+		sed -ri "s!^#?(track_counts)\s*=\s*\S+.*!\1 = 'on'!" /usr/share/postgresql/postgresql.conf.sample
+		grep -F "track_counts = 'on'" /usr/share/postgresql/postgresql.conf.sample
+		sed -ri "s!^#?(track_activities)\s*=\s*\S+.*!\1 = 'on'!" /usr/share/postgresql/postgresql.conf.sample
+		grep -F "track_activities = 'on'" /usr/share/postgresql/postgresql.conf.sample
+	fi
+
 	echo "NOTICE: Data directory not found, initializing"
 
 	chown -R postgres:postgres /var/lib/postgresql/data
@@ -37,7 +47,7 @@ else
 		"--lc-collate=und-x-icu"
 		"--lc-ctype=und-x-icu"
 		"--username=postgres"
-	)	
+	)
 
 	if [ "$POSTGRES_PASSWORD" = "" ]; then
 		POSTGRES_PASSWORD=`pwgen 16 1`

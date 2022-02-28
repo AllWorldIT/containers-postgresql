@@ -53,3 +53,8 @@ Optional collation for the database. Deafults to `und-x-icu`.
 Optional CTYPE for the database. Deafults to `und-x-icu`.
 
 
+## POSTGRES_TRACK_STATS
+
+Track PostgreSQL statistics by enabling `track_activities` and `track_counts`.
+
+
