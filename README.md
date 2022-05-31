@@ -1,6 +1,6 @@
 # Introduction
 
-This is a Postgresql container.
+This is a PostgreSQL container.
 
 See the [Alpine Base Image](https://gitlab.iitsp.com/allworldit/docker/alpine) project for additional configuration.
 
