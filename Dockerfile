@@ -1,4 +1,4 @@
-FROM registry.gitlab.iitsp.com/allworldit/docker/alpine:latest
+FROM registry.gitlab.iitsp.com/allworldit/docker/alpine/v3.17:latest
 
 ENV POSTGRESQL_VERSION=15
 
