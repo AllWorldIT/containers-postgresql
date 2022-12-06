@@ -115,7 +115,9 @@ EOF
 
 		if [ -n "$POSTGRES_USER" ]; then
 			echo "NOTICE: Granting user [$POSTGRES_USER] access to database [$POSTGRES_DATABASE]"
-			echo "GRANT ALL PRIVILEGES ON DATABASE $POSTGRES_DATABASE TO $POSTGRES_USER" >> "$tfile"
+			echo "GRANT ALL PRIVILEGES ON DATABASE $POSTGRES_DATABASE TO $POSTGRES_USER;" >> "$tfile"
+			echo "\\c $POSTGRES_DATABASE postgres" >> "$tfile"
+			echo "GRANT ALL ON SCHEMA public TO $POSTGRES_USER;" >> "$tfile"
 		fi
 	fi
 

@@ -1,6 +1,6 @@
 FROM registry.gitlab.iitsp.com/allworldit/docker/alpine:latest
 
-ENV POSTGRESQL_VERSION=14
+ENV POSTGRESQL_VERSION=15
 
 ARG VERSION_INFO=
 LABEL maintainer="Nigel Kukard <nkukard@lbsd.net>"
@@ -27,6 +27,7 @@ RUN set -ex; \
 		postgresql$POSTGRESQL_VERSION-contrib-jit \
 		postgresql$POSTGRESQL_VERSION-plpython3 \
 		postgresql$POSTGRESQL_VERSION-plpython3-contrib \
+		icu-data-full \
 		musl-locales \
 		pwgen \
 		sudo; \
