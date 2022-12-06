@@ -27,6 +27,7 @@ RUN set -ex; \
 		postgresql$POSTGRESQL_VERSION-contrib-jit \
 		postgresql$POSTGRESQL_VERSION-plpython3 \
 		postgresql$POSTGRESQL_VERSION-plpython3-contrib \
+		icu-data-full \
 		musl-locales \
 		pwgen \
 		sudo; \
