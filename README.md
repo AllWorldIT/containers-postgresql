@@ -16,7 +16,7 @@ Any file in this directory with a .sql, .sql.gz, .sql.xz or .sql.zst extension w
 
 Data directory.
 
-## POSTGRES_PASSWORD
+## POSTGRES_ROOT_PASSWORD
 
 Optional `postgres` password for the database when its created. If not assigned, it will be automatically generated and output in the logs.
 
@@ -28,9 +28,9 @@ Optional database to create.
 
 Optional user to create for the database. It will be granted access to the `POSTGRES_DATABASE` database.
 
-## POSTGRES_USER_PASSWORD
+## POSTGRES_PASSWORD
 
-Optional password to set for `POSTGRES_USER_PASSWORD`.
+Optional password to set for `POSTGRES_PASSWORD`.
 
 
 ## POSTGRES_ENCODING

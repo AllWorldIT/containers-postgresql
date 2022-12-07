@@ -2,7 +2,7 @@
 
 # Setup database credentials
 cat <<EOF > /root/.pgpass
-*:*:$POSTGRES_DATABASE:$POSTGRES_USER:$POSTGRES_USER_PASSWORD
+*:*:$POSTGRES_DATABASE:$POSTGRES_USER:$POSTGRES_PASSWORD
 EOF
 chmod 0600 /root/.pgpass
 

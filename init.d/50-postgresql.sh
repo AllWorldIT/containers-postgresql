@@ -49,9 +49,9 @@ else
 		"--username=postgres"
 	)
 
-	if [ "$POSTGRES_PASSWORD" = "" ]; then
-		POSTGRES_PASSWORD=`pwgen 16 1`
-		echo "NOTICE: PostgreSQL password for 'postgres': $POSTGRES_PASSWORD"
+	if [ "$POSTGRES_ROOT_PASSWORD" = "" ]; then
+		POSTGRES_ROOT_PASSWORD=`pwgen 16 1`
+		echo "NOTICE: PostgreSQL password for 'postgres': $POSTGRES_ROOT_PASSWORD"
 
 		pwfile=`mktemp`
 		if [ ! -f "$pwfile" ]; then
@@ -59,7 +59,7 @@ else
 		fi
 		chown root:postgres "$pwfile"
 		chmod 660 "$pwfile"
-		echo -n "$POSTGRES_PASSWORD" > "$pwfile"
+		echo -n "$POSTGRES_ROOT_PASSWORD" > "$pwfile"
 
 		INITDB_ARGS+=("--pwfile=$pwfile")
 	fi
@@ -70,7 +70,7 @@ else
 
 	POSTGRES_DATABASE=${POSTGRES_DATABASE:-""}
 	POSTGRES_USER=${POSTGRES_USER:-""}
-	POSTGRES_USER_PASSWORD=${POSTGRES_USER_PASSWORD:-""}
+	POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-""}
 
 	# Start server temporarily
 	docker_temp_server_start
@@ -83,9 +83,9 @@ else
 
 
 	if [ -n "$POSTGRES_USER" ]; then
-		echo "NOTICE: Creating user [$POSTGRES_USER] with password [$POSTGRES_USER_PASSWORD]"
+		echo "NOTICE: Creating user [$POSTGRES_USER] with password [$POSTGRES_PASSWORD]"
 		cat << EOF > "$tfile"
-CREATE USER $POSTGRES_USER WITH ENCRYPTED PASSWORD '${POSTGRES_USER_PASSWORD}';
+CREATE USER $POSTGRES_USER WITH ENCRYPTED PASSWORD '${POSTGRES_PASSWORD}';
 EOF
 	fi
 
