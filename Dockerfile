@@ -91,3 +91,5 @@ VOLUME ["/var/lib/postgresql/data"]
 
 EXPOSE 5432
 
+HEALTHCHECK CMD pg_isready -U postgres
+
