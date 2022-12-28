@@ -49,21 +49,24 @@ else
 		"--username=postgres"
 	)
 
-	if [ "$POSTGRES_ROOT_PASSWORD" = "" ]; then
+
+	# Setup database superuser password
+	if [ -z "$POSTGRES_ROOT_PASSWORD" ]; then
 		POSTGRES_ROOT_PASSWORD=`pwgen 16 1`
 		echo "NOTICE: PostgreSQL password for 'postgres': $POSTGRES_ROOT_PASSWORD"
-
-		pwfile=`mktemp`
-		if [ ! -f "$pwfile" ]; then
-			return 1
-		fi
-		chown root:postgres "$pwfile"
-		chmod 660 "$pwfile"
-		echo -n "$POSTGRES_ROOT_PASSWORD" > "$pwfile"
-
-		INITDB_ARGS+=("--pwfile=$pwfile")
 	fi
+	pwfile=`mktemp`
+	if [ ! -f "$pwfile" ]; then
+		return 1
+	fi
+	chown root:postgres "$pwfile"
+	chmod 660 "$pwfile"
 
+	echo -n "$POSTGRES_ROOT_PASSWORD" > "$pwfile"
+	INITDB_ARGS+=("--pwfile=$pwfile")
+
+
+	# Run database initialization
 	echo "NOTICE: PostgreSQL initdb args: ${INITDB_ARGS[@]}"
 	sudo -u postgres initdb ${INITDB_ARGS[@]} /var/lib/postgresql/data
 
