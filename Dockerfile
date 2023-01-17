@@ -19,7 +19,7 @@
 # IN THE SOFTWARE.
 
 
-FROM registry.conarx.tech/containers/alpine/3.17
+FROM registry.conarx.tech/containers/alpine/edge
 
 
 ENV POSTGRESQL_VERSION=15
@@ -27,8 +27,8 @@ ENV POSTGRESQL_VERSION=15
 
 ARG VERSION_INFO=
 LABEL org.opencontainers.image.authors   = "Nigel Kukard <nkukard@conarx.tech>"
-LABEL org.opencontainers.image.version   = "3.17"
-LABEL org.opencontainers.image.base.name = "registry.conarx.tech/containers/alpine/3.17"
+LABEL org.opencontainers.image.version   = "edge"
+LABEL org.opencontainers.image.base.name = "registry.conarx.tech/containers/alpine/edge"
 
 
 # 70 is the standard uid/gid for "postgres" in Alpine
