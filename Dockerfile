@@ -1,9 +1,35 @@
-FROM registry.gitlab.iitsp.com/allworldit/docker/alpine/v3.17:latest
+# Copyright (c) 2022-2023, AllWorldIT.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to
+# deal in the Software without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+# sell copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+# IN THE SOFTWARE.
+
+
+FROM registry.conarx.tech/containers/alpine/3.17
+
 
 ENV POSTGRESQL_VERSION=15
 
+
 ARG VERSION_INFO=
-LABEL maintainer="Nigel Kukard <nkukard@lbsd.net>"
+LABEL org.opencontainers.image.authors   = "Nigel Kukard <nkukard@conarx.tech>"
+LABEL org.opencontainers.image.version   = "3.17"
+LABEL org.opencontainers.image.base.name = "registry.conarx.tech/containers/alpine/3.17"
+
 
 # 70 is the standard uid/gid for "postgres" in Alpine
 # https://git.alpinelinux.org/aports/tree/main/postgresql/postgresql.pre-install?h=3.12-stable
@@ -32,10 +58,8 @@ RUN set -ex; \
 		pwgen \
 		sudo; \
 	true "PostgreSQL"; \
-	mkdir /docker-entrypoint-initdb.d; \
-	chmod 750 /docker-entrypoint-initdb.d; \
-	true "Versioning"; \
-	if [ -n "$VERSION_INFO" ]; then echo "$VERSION_INFO" >> /.VERSION_INFO; fi; \
+	mkdir /var/lib/postgresql-initdb.d; \
+	chmod 750 /var/lib/postgresql-initdb.d; \
 	true "Cleanup"; \
 	rm -f /var/cache/apk/*
 
@@ -49,34 +73,26 @@ RUN set -ex; \
 RUN set -ex; \
 	true "Creating runtime directories"; \
 	mkdir -p /run/postgresql; \
-	chown -R postgres:postgres /run/postgresql; \
+	chown postgres:postgres /run/postgresql; \
 	chmod 2777 /run/postgresql
 
 RUN set -ex; \
 	true "Cleaning up data directory"; \
 	mkdir -p "/var/lib/postgresql/data"; \
-	chown -R postgres:postgres "/var/lib/postgresql/data"; \
+	chown postgres:postgres "/var/lib/postgresql/data"; \
 	chmod 700 "/var/lib/postgresql/data"
 
 # PostgreSQL
 COPY etc/supervisor/conf.d/postgresql.conf /etc/supervisor/conf.d/postgresql.conf
-COPY init.d/50-postgresql.sh /docker-entrypoint-init.d/50-postgresql.sh
-COPY pre-init-tests.d/50-postgresql.sh /docker-entrypoint-pre-init-tests.d/50-postgresql.sh
-COPY tests.d/50-postgresql.sh /docker-entrypoint-tests.d/50-postgresql.sh
+COPY usr/local/share/flexible-docker-containers/init.d/42-postgresql.sh /usr/local/share/flexible-docker-containers/init.d
+COPY usr/local/share/flexible-docker-containers/pre-init-tests.d/42-postgresql.sh /usr/local/share/flexible-docker-containers/pre-init-tests.d
+COPY usr/local/share/flexible-docker-containers/tests.d/42-postgresql.sh /usr/local/share/flexible-docker-containers/tests.d
+COPY usr/local/share/flexible-docker-containers/healthcheck.d/42-postgresql.sh /usr/local/share/flexible-docker-containers/healthcheck.d
 RUN set -ex; \
-		chown root:root \
-			/etc/supervisor/conf.d/postgresql.conf \
-			/docker-entrypoint-init.d/50-postgresql.sh \
-			/docker-entrypoint-pre-init-tests.d/50-postgresql.sh \
-			/docker-entrypoint-tests.d/50-postgresql.sh \
-			; \
-		chmod 0644 \
-			/etc/supervisor/conf.d/postgresql.conf \
-			; \
-		chmod 0755 \
-			/docker-entrypoint-init.d/50-postgresql.sh \
-			/docker-entrypoint-pre-init-tests.d/50-postgresql.sh \
-			/docker-entrypoint-tests.d/50-postgresql.sh
+	true "Flexible Docker Containers"; \
+	if [ -n "$VERSION_INFO" ]; then echo "$VERSION_INFO" >> /.VERSION_INFO; fi; \
+	true "Permissions"; \
+	fdc set-perms
 
 # We set the default STOPSIGNAL to SIGINT, which corresponds to what PostgreSQL
 # calls "Fast Shutdown mode" wherein new connections are disallowed and any
@@ -90,6 +106,3 @@ STOPSIGNAL SIGINT
 VOLUME ["/var/lib/postgresql/data"]
 
 EXPOSE 5432
-
-HEALTHCHECK CMD pg_isready -U postgres || exit 1
-

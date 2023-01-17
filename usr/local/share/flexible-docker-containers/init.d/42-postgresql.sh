@@ -1,4 +1,23 @@
-#!/bin/sh
+#!/bin/bash
+# Copyright (c) 2022-2023, AllWorldIT.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to
+# deal in the Software without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+# sell copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+# IN THE SOFTWARE.
 
 
 docker_temp_server_start() {
@@ -13,18 +32,15 @@ docker_temp_server_stop() {
 }
 
 
-if [ -d "/run/postgresql" ]; then
-	chown -R postgres:postgres /run/postgresql
-else
-	mkdir -p /run/postgresql
-	chown -R postgres:postgres /run/postgresql
-	chmod 2777 /run/postgresql
-fi
 
-if [ -f /var/lib/postgresql/data/PG_VERSION ]; then
-	chown -R postgres:postgres /var/lib/postgresql/data
-else
-	echo "NOTICE: Initializing settings"
+echo "NOTICE: Setting PostgreSQL permissions"
+chown postgres:postgres /var/lib/postgresql
+chown postgres:postgres /var/lib/postgresql
+chmod 700 /var/lib/postgresql
+
+
+if [ ! -f /var/lib/postgresql/data/PG_VERSION ]; then
+	echo "NOTICE: Initializing PostgreSQL settings"
 
 	# Check if we have stats enabled
 	if [ -n "$POSTGRES_TRACK_STATS" ]; then
@@ -34,10 +50,7 @@ else
 		grep -F "track_activities = 'on'" /usr/share/postgresql/postgresql.conf.sample
 	fi
 
-	echo "NOTICE: Data directory not found, initializing"
-
-	chown -R postgres:postgres /var/lib/postgresql/data
-	chmod 700 /var/lib/postgresql/data
+	echo "NOTICE: PostgreSQL data directory not found, initializing"
 
 	INITDB_ARGS=( \
 		"--auth=scram-sha-256"
@@ -65,7 +78,6 @@ else
 	echo -n "$POSTGRES_ROOT_PASSWORD" > "$pwfile"
 	INITDB_ARGS+=("--pwfile=$pwfile")
 
-
 	# Run database initialization
 	echo "NOTICE: PostgreSQL initdb args: ${INITDB_ARGS[@]}"
 	sudo -u postgres initdb ${INITDB_ARGS[@]} /var/lib/postgresql/data
@@ -78,12 +90,10 @@ else
 	# Start server temporarily
 	docker_temp_server_start
 
-
 	tfile=`mktemp`
 	if [ ! -f "$tfile" ]; then
 		return 1
 	fi
-
 
 	if [ -n "$POSTGRES_USER" ]; then
 		echo "NOTICE: Creating user [$POSTGRES_USER] with password [$POSTGRES_PASSWORD]"
@@ -94,7 +104,7 @@ EOF
 
 	if [ -n "$POSTGRES_DATABASE" ]; then
 		DATABASE_OPTIONS=()
-		echo "NOTICE: Creating database [$POSTGRES_DATABASE]"
+		echo "NOTICE: Creating PostgreSQL database [$POSTGRES_DATABASE]"
 
 		if [ -n "$POSTGRES_ENCODING" ]; then
 			DATABASE_OPTIONS+=("ENCODING = '$POSTGRES_ENCODING'")
@@ -109,15 +119,15 @@ EOF
 		fi
 
 		if [ "${#DATABASE_OPTIONS[@]}" -gt 0 ]; then
-			echo "INFO: Database ENCODING [$POSTGRES_ENCODING], LC_COLLATE [$POSTGRES_LC_COLLATE], LC_CTYPE [$POSTGRES_LC_CTYPE]"
+			echo "INFO: PostgreSQL database ENCODING [$POSTGRES_ENCODING], LC_COLLATE [$POSTGRES_LC_COLLATE], LC_CTYPE [$POSTGRES_LC_CTYPE]"
 			echo "CREATE DATABASE $POSTGRES_DATABASE ${DATABASE_OPTIONS[@]};" >> "$tfile"
 		else
-			echo "INFO: Database with default encoding and collation"
+			echo "INFO: PostgreSQL database with default encoding and collation"
 			echo "CREATE DATABASE $POSTGRES_DATABASE;" >> "$tfile"
 		fi
 
 		if [ -n "$POSTGRES_USER" ]; then
-			echo "NOTICE: Granting user [$POSTGRES_USER] access to database [$POSTGRES_DATABASE]"
+			echo "NOTICE: Granting PostgreSQL user [$POSTGRES_USER] access to database [$POSTGRES_DATABASE]"
 			echo "GRANT ALL PRIVILEGES ON DATABASE $POSTGRES_DATABASE TO $POSTGRES_USER;" >> "$tfile"
 			echo "\\c $POSTGRES_DATABASE postgres" >> "$tfile"
 			echo "GRANT ALL ON SCHEMA public TO $POSTGRES_USER;" >> "$tfile"
@@ -126,18 +136,35 @@ EOF
 
 	# Create database and user
 	sudo -u postgres psql -v ON_ERROR_STOP=ON < "$tfile"
-	rm -f $tfile
-
+	rm -f "$tfile"
 
 	# Load data
-	find /docker-entrypoint-initdb.d -type f | sort | while read f
+	find /var/lib/mysql-initdb.d -type f | sort -n | while read f
 	do
 		case "$f" in
-			*.sql)    echo "NOTICE: initdb.d - Loading [$f]"; sudo -u postgres psql < "$f"; echo ;;
-			*.sql.gz) echo "NOTICE: initdb.d - Loading [$f]"; gunzip -c "$f" | sudo -u postgres psql; echo ;;
-			*.sql.xz) echo "NOTICE: initdb.d - Loading [$f]"; unxz -c "$f" | sudo -u postgres psql; echo ;;
-			*.sql.zst) echo "NOTICE: initdb.d - Loading [$f]"; unzstd -c "$f" | sudo -u postgres psql; echo ;;
-			*)        echo "WARNING: Ignoring initdb entry [$f]" ;;
+			*.sql)
+				echo "NOTICE: postgresql-initdb.d - Loading [$f]"
+				sudo -u postgres psql < "$f"
+				echo
+				;;
+			*.sql.gz)
+				echo "NOTICE: postgresql-initdb.d - Loading [$f]"
+				gunzip -c "$f" | sudo -u postgres psql
+				echo
+				;;
+			*.sql.xz)
+				echo "NOTICE: postgresql-initdb.d - Loading [$f]"
+				unxz -c "$f" | sudo -u postgres psql
+				echo
+				;;
+			*.sql.zst)
+				echo "NOTICE: postgresql-initdb.d - Loading [$f]"
+				unzstd -c "$f" | sudo -u postgres psql
+				echo
+				;;
+			*)
+				echo "WARNING: Ignoring postgresql-initdb.d entry [$f]"
+				;;
 		esac
 	done
 
@@ -147,4 +174,6 @@ EOF
 	docker_temp_server_stop
 fi
 
-
+echo "NOTICE: Setting PostgreSQL data directory permissions"
+chown postgres:postgres /var/lib/postgresql/data
+chmod 700 /var/lib/postgresql/data
