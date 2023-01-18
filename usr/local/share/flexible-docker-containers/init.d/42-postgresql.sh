@@ -34,9 +34,12 @@ docker_temp_server_stop() {
 
 
 echo "NOTICE: Setting PostgreSQL permissions"
-chown postgres:postgres /var/lib/postgresql
-chown postgres:postgres /var/lib/postgresql
-chmod 700 /var/lib/postgresql
+chown postgres:postgres \
+	/var/lib/postgresql \
+	/var/lib/postgresql/data
+chmod 750 \
+	/var/lib/postgresql \
+	/var/lib/postgresql/data
 
 
 if [ ! -f /var/lib/postgresql/data/PG_VERSION ]; then
@@ -139,7 +142,7 @@ EOF
 	rm -f "$tfile"
 
 	# Load data
-	find /var/lib/mysql-initdb.d -type f | sort -n | while read f
+	find /var/lib/postgresql-initdb.d -type f | sort -n | while read f
 	do
 		case "$f" in
 			*.sql)
@@ -173,7 +176,3 @@ EOF
 
 	docker_temp_server_stop
 fi
-
-echo "NOTICE: Setting PostgreSQL data directory permissions"
-chown postgres:postgres /var/lib/postgresql/data
-chmod 700 /var/lib/postgresql/data

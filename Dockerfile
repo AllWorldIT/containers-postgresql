@@ -78,9 +78,13 @@ RUN set -ex; \
 
 RUN set -ex; \
 	true "Cleaning up data directory"; \
-	mkdir -p "/var/lib/postgresql/data"; \
-	chown postgres:postgres "/var/lib/postgresql/data"; \
-	chmod 700 "/var/lib/postgresql/data"
+	mkdir -p /var/lib/postgresql/data; \
+	chown postgres:postgres \
+		/var/lib/postgresql \
+		/var/lib/postgresql/data; \
+	chmod 750 \
+		/var/lib/postgresql \
+		/var/lib/postgresql/data
 
 # PostgreSQL
 COPY etc/supervisor/conf.d/postgresql.conf /etc/supervisor/conf.d/postgresql.conf
