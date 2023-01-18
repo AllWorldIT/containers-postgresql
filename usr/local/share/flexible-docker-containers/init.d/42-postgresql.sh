@@ -35,9 +35,11 @@ docker_temp_server_stop() {
 
 echo "NOTICE: Setting PostgreSQL permissions"
 chown postgres:postgres /var/lib/postgresql
-chown postgres:postgres /var/lib/postgresql
-chmod 700 /var/lib/postgresql
-
+chmod 750 /var/lib/postgresql
+if [ -d /var/lib/postgresql/data ]; then
+	chown postgres:postgres /var/lib/postgresql/data
+	chown 750 /var/lib/postgresql/data
+fi
 
 if [ ! -f /var/lib/postgresql/data/PG_VERSION ]; then
 	echo "NOTICE: Initializing PostgreSQL settings"
@@ -176,4 +178,4 @@ fi
 
 echo "NOTICE: Setting PostgreSQL data directory permissions"
 chown postgres:postgres /var/lib/postgresql/data
-chmod 700 /var/lib/postgresql/data
+chmod 750 /var/lib/postgresql/data
