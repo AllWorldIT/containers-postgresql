@@ -82,7 +82,7 @@ Track PostgreSQL statistics by enabling `track_activities` and `track_counts`.
 # Volumes
 
 
-## /var/lib/postgresql
+## /var/lib/postgresql/data
 
 PostgreSQL data directory.
 
