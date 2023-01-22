@@ -21,9 +21,9 @@
 
 
 if ! POSTGRESQL_TEST_RESULT=$(pg_isready -U postgres 2>&1); then
-    echo -e "ERROR: Healthcheck failed for PostgreSQL:\n$POSTGRESQL_TEST_RESULT"
-    false
+	fdc_error "Health check failed for PostgreSQL:\n$POSTGRESQL_TEST_RESULT"
+	false
 fi
 if [ -n "$FDC_CI" ]; then
-    echo -e "INFO: Healthcheck for PostgreSQL:\n$POSTGRESQL_TEST_RESULT"
+	fdc_info "Health check for PostgreSQL:\n$POSTGRESQL_TEST_RESULT"
 fi
