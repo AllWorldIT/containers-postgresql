@@ -26,17 +26,17 @@ cat <<EOF > /root/.pgpass
 EOF
 chmod 0600 /root/.pgpass
 
-echo "TEST START (postgresql): Test create table..."
+fdc_test_start postgresql "Test create table..."
 # Test creating a table with the user which should own the database
 echo "CREATE TABLE testtable (id SERIAL PRIMARY KEY, txt TEXT);" | psql --set=ON_ERROR_STOP=ON --host=127.0.0.1 --user="$POSTGRES_USER" "$POSTGRES_DATABASE"
-echo "TEST PASSED (postgresql): Test table created"
+fdc_test_pass postgresql "Test table created"
 
 # Setup database credentials
 cat <<EOF > /root/.pgpass
 *:*:$POSTGRES_DATABASE:postgres:$POSTGRES_ROOT_PASSWORD
 EOF
 
-echo "TEST START (postgresql): Test insert data in table..."
+fdc_test_start postgresql "Test insert data in table..."
 # Test inserting data into the users database as the superuser
 echo "INSERT INTO testtable (txt) VALUES ('test');" | psql --set=ON_ERROR_STOP=ON --host=127.0.0.1 --user="postgres" "$POSTGRES_DATABASE"
-echo "TEST PASSED (postgresql): Test data inserted into table"
+fdc_test_pass postgresql "Test data inserted into table"
