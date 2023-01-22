@@ -33,7 +33,7 @@ docker_temp_server_stop() {
 
 
 
-echo "NOTICE: Setting PostgreSQL permissions"
+fdc_notice "Setting PostgreSQL permissions"
 chown postgres:postgres \
 	/var/lib/postgresql \
 	/var/lib/postgresql/data
@@ -43,7 +43,7 @@ chmod 750 \
 
 
 if [ ! -f /var/lib/postgresql/data/PG_VERSION ]; then
-	echo "NOTICE: Initializing PostgreSQL settings"
+	fdc_notice "Initializing PostgreSQL settings"
 
 	# Check if we have stats enabled
 	if [ -n "$POSTGRES_TRACK_STATS" ]; then
@@ -53,9 +53,9 @@ if [ ! -f /var/lib/postgresql/data/PG_VERSION ]; then
 		grep -F "track_activities = 'on'" /usr/share/postgresql/postgresql.conf.sample
 	fi
 
-	echo "NOTICE: PostgreSQL data directory not found, initializing"
+	fdc_notice "PostgreSQL data directory not found, initializing"
 
-	INITDB_ARGS=( \
+	INITDB_ARGS=(
 		"--auth=scram-sha-256"
 		"--auth-local=trust"
 		"--encoding=UTF8"
@@ -68,10 +68,10 @@ if [ ! -f /var/lib/postgresql/data/PG_VERSION ]; then
 
 	# Setup database superuser password
 	if [ -z "$POSTGRES_ROOT_PASSWORD" ]; then
-		POSTGRES_ROOT_PASSWORD=`pwgen 16 1`
-		echo "NOTICE: PostgreSQL password for 'postgres': $POSTGRES_ROOT_PASSWORD"
+		POSTGRES_ROOT_PASSWORD=$(pwgen 16 1)
+		fdc_notice "PostgreSQL password for 'postgres': $POSTGRES_ROOT_PASSWORD"
 	fi
-	pwfile=`mktemp`
+	pwfile=$(mktemp)
 	if [ ! -f "$pwfile" ]; then
 		return 1
 	fi
@@ -82,24 +82,24 @@ if [ ! -f /var/lib/postgresql/data/PG_VERSION ]; then
 	INITDB_ARGS+=("--pwfile=$pwfile")
 
 	# Run database initialization
-	echo "NOTICE: PostgreSQL initdb args: ${INITDB_ARGS[@]}"
-	sudo -u postgres initdb ${INITDB_ARGS[@]} /var/lib/postgresql/data
+	fdc_notice "PostgreSQL initdb args: ${INITDB_ARGS[*]}"
+	sudo -u postgres initdb "${INITDB_ARGS[@]}" /var/lib/postgresql/data
 
 
-	POSTGRES_DATABASE=${POSTGRES_DATABASE:-""}
-	POSTGRES_USER=${POSTGRES_USER:-""}
-	POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-""}
+	export POSTGRES_DATABASE="$POSTGRES_DATABASE"
+	export POSTGRES_USER="$POSTGRES_USER"
+	export POSTGRES_PASSWORD="$POSTGRES_PASSWORD"
 
 	# Start server temporarily
 	docker_temp_server_start
 
-	tfile=`mktemp`
+	tfile=$(mktemp)
 	if [ ! -f "$tfile" ]; then
 		return 1
 	fi
 
 	if [ -n "$POSTGRES_USER" ]; then
-		echo "NOTICE: Creating user [$POSTGRES_USER] with password [$POSTGRES_PASSWORD]"
+		fdc_notice "Creating user [$POSTGRES_USER] with password [$POSTGRES_PASSWORD]"
 		cat << EOF > "$tfile"
 CREATE USER $POSTGRES_USER WITH ENCRYPTED PASSWORD '${POSTGRES_PASSWORD}';
 EOF
@@ -107,7 +107,7 @@ EOF
 
 	if [ -n "$POSTGRES_DATABASE" ]; then
 		DATABASE_OPTIONS=()
-		echo "NOTICE: Creating PostgreSQL database [$POSTGRES_DATABASE]"
+		fdc_notice "Creating PostgreSQL database [$POSTGRES_DATABASE]"
 
 		if [ -n "$POSTGRES_ENCODING" ]; then
 			DATABASE_OPTIONS+=("ENCODING = '$POSTGRES_ENCODING'")
@@ -122,46 +122,48 @@ EOF
 		fi
 
 		if [ "${#DATABASE_OPTIONS[@]}" -gt 0 ]; then
-			echo "INFO: PostgreSQL database ENCODING [$POSTGRES_ENCODING], LC_COLLATE [$POSTGRES_LC_COLLATE], LC_CTYPE [$POSTGRES_LC_CTYPE]"
-			echo "CREATE DATABASE $POSTGRES_DATABASE ${DATABASE_OPTIONS[@]};" >> "$tfile"
+			fdc_info "PostgreSQL database ENCODING [$POSTGRES_ENCODING], LC_COLLATE [$POSTGRES_LC_COLLATE], LC_CTYPE [$POSTGRES_LC_CTYPE]"
+			echo "CREATE DATABASE $POSTGRES_DATABASE ${DATABASE_OPTIONS[*]};" >> "$tfile"
 		else
-			echo "INFO: PostgreSQL database with default encoding and collation"
+			fdc_info "PostgreSQL database with default encoding and collation"
 			echo "CREATE DATABASE $POSTGRES_DATABASE;" >> "$tfile"
 		fi
 
 		if [ -n "$POSTGRES_USER" ]; then
-			echo "NOTICE: Granting PostgreSQL user [$POSTGRES_USER] access to database [$POSTGRES_DATABASE]"
-			echo "GRANT ALL PRIVILEGES ON DATABASE $POSTGRES_DATABASE TO $POSTGRES_USER;" >> "$tfile"
-			echo "\\c $POSTGRES_DATABASE postgres" >> "$tfile"
-			echo "GRANT ALL ON SCHEMA public TO $POSTGRES_USER;" >> "$tfile"
+			fdc_notice "Granting PostgreSQL user [$POSTGRES_USER] access to database [$POSTGRES_DATABASE]"
+			{
+				echo "GRANT ALL PRIVILEGES ON DATABASE $POSTGRES_DATABASE TO $POSTGRES_USER;"
+				echo "\\c $POSTGRES_DATABASE postgres"
+				echo "GRANT ALL ON SCHEMA public TO $POSTGRES_USER;"
+			} >> "$tfile"
 		fi
 	fi
 
 	# Create database and user
-	sudo -u postgres psql -v ON_ERROR_STOP=ON < "$tfile"
+	( sudo -u postgres psql -v ON_ERROR_STOP=ON ) < "$tfile"
 	rm -f "$tfile"
 
 	# Load data
-	find /var/lib/postgresql-initdb.d -type f | sort -n | while read f
+	find /var/lib/postgresql-initdb.d -type f | sort -n | while read -r f
 	do
 		case "$f" in
 			*.sql)
-				echo "NOTICE: postgresql-initdb.d - Loading [$f]"
-				sudo -u postgres psql < "$f"
+				fdc_notice "postgresql-initdb.d - Loading [$f]"
+				( sudo -u postgres psql ) < "$f"
 				echo
 				;;
 			*.sql.gz)
-				echo "NOTICE: postgresql-initdb.d - Loading [$f]"
+				fdc_notice "postgresql-initdb.d - Loading [$f]"
 				gunzip -c "$f" | sudo -u postgres psql
 				echo
 				;;
 			*.sql.xz)
-				echo "NOTICE: postgresql-initdb.d - Loading [$f]"
+				fdc_notice "postgresql-initdb.d - Loading [$f]"
 				unxz -c "$f" | sudo -u postgres psql
 				echo
 				;;
 			*.sql.zst)
-				echo "NOTICE: postgresql-initdb.d - Loading [$f]"
+				fdc_notice "postgresql-initdb.d - Loading [$f]"
 				unzstd -c "$f" | sudo -u postgres psql
 				echo
 				;;
