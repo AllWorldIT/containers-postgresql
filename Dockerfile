@@ -33,7 +33,7 @@ LABEL org.opencontainers.image.base.name = "registry.conarx.tech/containers/alpi
 
 # 70 is the standard uid/gid for "postgres" in Alpine
 # https://git.alpinelinux.org/aports/tree/main/postgresql/postgresql.pre-install?h=3.12-stable
-RUN set -ex; \
+RUN set -eux; \
 	addgroup -g 70 -S postgres; \
 	adduser -u 70 -S -D -G postgres -H -h /var/lib/postgresql -s /bin/sh postgres; \
 	mkdir -p /var/lib/postgresql; \
@@ -43,7 +43,7 @@ RUN set -ex; \
 # alpine doesn't require explicit locale-file generation
 ENV LANG en_US.utf8
 
-RUN set -ex; \
+RUN set -eux; \
 	true "PostgreSQL"; \
 	apk add --no-cache \
 		postgresql$POSTGRESQL_VERSION \
@@ -64,19 +64,19 @@ RUN set -ex; \
 	rm -f /var/cache/apk/*
 
 # make the sample config easier to munge (and "correct by default")
-RUN set -ex; \
+RUN set -eux; \
 	true "Cleaning up config file"; \
 	cp -v /usr/share/postgresql/postgresql.conf.sample /usr/share/postgresql/postgresql.conf.sample.orig; \
 	sed -ri "s!^#?(listen_addresses)\s*=\s*\S+.*!\1 = '*'!" /usr/share/postgresql/postgresql.conf.sample; \
 	grep -F "listen_addresses = '*'" /usr/share/postgresql/postgresql.conf.sample
 
-RUN set -ex; \
+RUN set -eux; \
 	true "Creating runtime directories"; \
 	mkdir -p /run/postgresql; \
 	chown postgres:postgres /run/postgresql; \
 	chmod 2777 /run/postgresql
 
-RUN set -ex; \
+RUN set -eux; \
 	true "Cleaning up data directory"; \
 	mkdir -p /var/lib/postgresql/data; \
 	chown postgres:postgres \
@@ -92,7 +92,7 @@ COPY usr/local/share/flexible-docker-containers/init.d/42-postgresql.sh /usr/loc
 COPY usr/local/share/flexible-docker-containers/pre-init-tests.d/42-postgresql.sh /usr/local/share/flexible-docker-containers/pre-init-tests.d
 COPY usr/local/share/flexible-docker-containers/tests.d/42-postgresql.sh /usr/local/share/flexible-docker-containers/tests.d
 COPY usr/local/share/flexible-docker-containers/healthcheck.d/42-postgresql.sh /usr/local/share/flexible-docker-containers/healthcheck.d
-RUN set -ex; \
+RUN set -eux; \
 	true "Flexible Docker Containers"; \
 	if [ -n "$VERSION_INFO" ]; then echo "$VERSION_INFO" >> /.VERSION_INFO; fi; \
 	true "Permissions"; \
