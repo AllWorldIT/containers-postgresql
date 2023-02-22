@@ -26,17 +26,38 @@ cat <<EOF > /root/.pgpass
 EOF
 chmod 0600 /root/.pgpass
 
+
+# Test creating a table
 fdc_test_start postgresql "Test create table..."
-# Test creating a table with the user which should own the database
-echo "CREATE TABLE testtable (id SERIAL PRIMARY KEY, txt TEXT);" | psql --set=ON_ERROR_STOP=ON --host=127.0.0.1 --user="$POSTGRES_USER" "$POSTGRES_DATABASE"
+if ! echo "CREATE TABLE testtable (id SERIAL PRIMARY KEY, txt TEXT);" | psql --set=ON_ERROR_STOP=ON --host=127.0.0.1 --user="$POSTGRES_USER" "$POSTGRES_DATABASE"; then
+    fdc_test_fail postgresql "Failed to create table 'testtable'"
+    false
+fi
 fdc_test_pass postgresql "Test table created"
 
-# Setup database credentials
-cat <<EOF > /root/.pgpass
-*:*:$POSTGRES_DATABASE:postgres:$POSTGRES_ROOT_PASSWORD
-EOF
 
+# Test inserting data
 fdc_test_start postgresql "Test insert data in table..."
-# Test inserting data into the users database as the superuser
-echo "INSERT INTO testtable (txt) VALUES ('test');" | psql --set=ON_ERROR_STOP=ON --host=127.0.0.1 --user="postgres" "$POSTGRES_DATABASE"
+if ! echo "INSERT INTO testtable (txt) VALUES ('test');" | psql --set=ON_ERROR_STOP=ON --host=127.0.0.1 --user="$POSTGRES_USER" "$POSTGRES_DATABASE"; then
+    fdc_test_fail postgresql "Failed to insert data into test table 'testtable'"
+    false
+fi
 fdc_test_pass postgresql "Test data inserted into table"
+
+
+# Test selecting data
+fdc_test_start postgresql "Test SELECT on inserted data..."
+if ! echo "SELECT * FROM testtable;" | psql --set=ON_ERROR_STOP=ON --host=127.0.0.1 --user="$POSTGRES_USER" "$POSTGRES_DATABASE"; then
+    fdc_test_fail postgresql "Failed to SELECT data"
+    false
+fi
+fdc_test_pass postgresql "Test SELECT on inserted data worked"
+
+
+# Test extension
+fdc_test_start postgresql "Test an extension works..."
+if ! echo "SELECT difference('hello', 'world');" | psql --set=ON_ERROR_STOP=ON --host=127.0.0.1 --user="$POSTGRES_USER" "$POSTGRES_DATABASE"; then
+    fdc_test_fail postgresql "Failed to make use of extension"
+    false
+fi
+fdc_test_pass postgresql "Test of extension worked"
