@@ -19,10 +19,149 @@
 # IN THE SOFTWARE.
 
 
+FROM registry.conarx.tech/containers/alpine/edge as builder
+
+ENV POSTGRESQL_VER=15.2
+# This must ALSO be set below in the actual image build
+ENV LLVM_VER=15
+
+
+# Copy build patches
+COPY patches build/patches
+
+
+RUN set -eux; \
+	true "Installing build dependencies"; \
+# from https://git.alpinelinux.org/aports/tree/main/postgresql15/APKBUILD
+	apk add --no-cache \
+		build-base \
+		patch \
+		sudo \
+		\
+		clang$LLVM_VER \
+		icu-dev \
+		llvm$LLVM_VER \
+		lz4-dev \
+		openssl-dev \
+		zstd-dev \
+		\
+		bison \
+		flex \
+		libxml2-dev \
+		linux-headers \
+		llvm$LLVM_VER-dev \
+		openldap-dev \
+		perl-dev \
+		python3-dev \
+		readline-dev \
+		tcl-dev \
+		util-linux-dev \
+		zlib-dev \
+		\
+		diffutils \
+		icu-data-full \
+		perl-ipc-run \
+		; \
+	true "Cleanup"; \
+	rm -f /var/cache/apk/*
+
+# Download tarballs
+RUN set -eux; \
+	mkdir -p build; \
+	cd build; \
+	# PostgreSQL
+	wget "https://ftp.postgresql.org/pub/source/v$POSTGRESQL_VER/postgresql-$POSTGRESQL_VER.tar.bz2"; \
+	tar -jxf "postgresql-$POSTGRESQL_VER.tar.bz2"
+
+# Build
+RUN set -eux; \
+	cd build; \
+	cd "postgresql-$POSTGRESQL_VER"; \
+# Patching
+	patch -p1 < ../patches/disable-html-docs.patch; \
+	patch -p1 < ../patches/dont-use-locale-a-on-musl.patch; \
+	patch -p1 < ../patches/initdb.patch; \
+	patch -p1 < ../patches/libpgport-pkglibdir.patch.txt; \
+	patch -p1 < ../patches/perl-rpath.patch; \
+	patch -p1 < ../patches/remove-libecpg_compat.patch; \
+	patch -p1 < ../patches/unix_socket_directories.patch; \
+# Compiler flags
+	export CFLAGS="-march=x86-64 -mtune=generic -O2 -pipe -fno-plt -fexceptions -Wp,-D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security -fstack-clash-protection -fcf-protection -flto=auto"; \
+	export CXXFLAGS="-Wp,-D_GLIBCXX_ASSERTIONS"; \
+	export LDFLAGS="-Wl,-O2,--sort-common,--as-needed,-z,relro,-z,now -flto=auto"; \
+	export LLVM_CONFIG=/usr/lib/llvm$LLVM_VER/bin/llvm-config; \
+	\
+	pkgname=postgresql; \
+	_bindir=usr/bin; \
+	_datadir=usr/share/$pkgname; \
+	_docdir=usr/share/doc/$pkgname; \
+	_mandir=$_datadir/man; \
+	_includedir=usr/include/postgresql; \
+	# Directory for server-related libraries. This is hard-coded in
+	# per-version-dirs.patch.
+	_srvlibdir=usr/lib/$pkgname; \
+	\
+	./configure \
+		--prefix=/usr \
+		--bindir=/$_bindir \
+		--datarootdir=/usr/share \
+		--datadir=/$_datadir \
+		--docdir=/$_docdir \
+		--includedir=/$_includedir \
+		--libdir=/usr/lib \
+		--mandir=/$_mandir \
+		--sysconfdir=/etc/postgresql \
+		--disable-rpath \
+		--disable-static \
+		--with-system-tzdata=/usr/share/zoneinfo \
+		--with-libxml \
+		--with-openssl \
+		--with-uuid=e2fs \
+		--with-llvm \
+		--with-icu \
+		--with-perl \
+		--with-python \
+		--with-tcl \
+		--with-lz4 \
+		--with-zstd \
+		--with-ldap \
+		--enable-tap-tests \
+		; \
+	\
+# Build
+	make VERBOSE=1 -j$(nproc) -l 8 world
+
+# Install
+RUN set -eux; \
+	cd build; \
+	cd "postgresql-$POSTGRESQL_VER"; \
+	make DESTDIR="/build/postgresql-root" install; \
+	make DESTDIR="/build/postgresql-root" -C contrib install; \
+	# Install Postgresql so we can run the installcheck tests below
+	tar -c -C /build/postgresql-root . | tar -x -C /; \
+	du -hs /build/postgresql-root
+
+
+# Testing
+# NK: We run this after the installation so we have access to libpq.so
+RUN set -eux; \
+	cd build; \
+	# For testing we need to copy the source directory, and run the tests as a non-priv user
+	adduser -D pgsqltest; \
+	chown -R pgsqltest:pgsqltest "postgresql-$POSTGRESQL_VER"; \
+	cd "postgresql-$POSTGRESQL_VER"; \
+	# Test
+	sudo -u pgsqltest make VERBOSE=1 -j$(nproc) -l8 check MAX_CONNECTIONS=$(nproc)
+
+
+
 FROM registry.conarx.tech/containers/alpine/edge
 
 
-ENV POSTGRESQL_VERSION=15
+ENV LLVM_VER=15
+
+
+COPY --from=builder /build/postgresql-root /
 
 
 ARG VERSION_INFO=
@@ -46,16 +185,16 @@ ENV LANG en_US.utf8
 RUN set -eux; \
 	true "PostgreSQL"; \
 	apk add --no-cache \
-		postgresql$POSTGRESQL_VERSION \
-		postgresql$POSTGRESQL_VERSION-client \
-		postgresql$POSTGRESQL_VERSION-client \
-		postgresql$POSTGRESQL_VERSION-jit \
-		postgresql$POSTGRESQL_VERSION-contrib-jit \
-		postgresql$POSTGRESQL_VERSION-plpython3 \
-		postgresql$POSTGRESQL_VERSION-plpython3-contrib \
+		icu-libs \
+		libldap \
+		libxml2 \
+		llvm$LLVM_VER-libs \
+		lz4-libs \
+		zstd-libs \
 		icu-data-full \
 		musl-locales \
 		pwgen \
+		tzdata \
 		sudo; \
 	true "PostgreSQL"; \
 	mkdir /var/lib/postgresql-initdb.d; \
