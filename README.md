@@ -56,7 +56,7 @@ We also provide consulting services to create and maintain Docker images to meet
 # Environment Variables
 
 Additional environment variables are available from...
-* [Conarx Containers Alpine image](https://gitlab.conarx.tech/containers/alpine).
+* [Conarx Containers Alpine image](https://gitlab.conarx.tech/containers/alpine)
 
 
 ## POSTGRES_ROOT_PASSWORD
@@ -67,6 +67,11 @@ Optional password for the `postgres` user, set when the database its created. If
 ## POSTGRES_DATABASE
 
 Optional name database to create.
+
+
+## POSTGRES_DATABASE_EXTENSIONS
+
+Extensions to add to the database.
 
 
 ## POSTGRES_USER
