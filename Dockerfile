@@ -137,16 +137,30 @@ RUN set -eux; \
 	cd "postgresql-$POSTGRESQL_VER"; \
 	make DESTDIR="/build/postgresql-root" install; \
 	make DESTDIR="/build/postgresql-root" -C contrib install; \
-	# Install Postgresql so we can run the installcheck tests below
-	tar -c -C /build/postgresql-root . | tar -x -C /; \
+	find /build/postgresql-root -name "*.a" -print0 | xargs -0 rm -fv; \
+	echo "Size before stripping..."; \
 	du -hs /build/postgresql-root
 
+# Strip binaries
+RUN set -eux; \
+	cd build/postgresql-root; \
+	scanelf --recursive --nobanner --osabi --etype "ET_DYN,ET_EXEC" .  | awk '{print $3}' | xargs \
+		strip \
+			--remove-section=.comment \
+			--remove-section=.note \
+			-R .gnu.lto_* -R .gnu.debuglto_* \
+			-N __gnu_lto_slim -N __gnu_lto_v1 \
+			--strip-unneeded; \
+	echo "Size after stripping..."; \
+	du -hs /build/postgresql-root
 
 # Testing
 # NK: We run this after the installation so we have access to libpq.so
 RUN set -eux; \
+	# Install Postgresql so we can run the installcheck tests below
+	tar -c -C /build/postgresql-root . | tar -x -C /; \
+	# For testing we need to run the tests as a non-priv user
 	cd build; \
-	# For testing we need to copy the source directory, and run the tests as a non-priv user
 	adduser -D pgsqltest; \
 	chown -R pgsqltest:pgsqltest "postgresql-$POSTGRESQL_VER"; \
 	cd "postgresql-$POSTGRESQL_VER"; \
