@@ -137,6 +137,13 @@ EOF
 				echo "GRANT ALL ON SCHEMA public TO $POSTGRES_USER;"
 			} >> "$tfile"
 		fi
+
+		if [ -n "$POSTGRES_DATABASE_EXTENSIONS" ]; then
+			DATABASE_EXTENSIONS=$(echo "$POSTGRES_DATABASE_EXTENSIONS" | tr ',' ' ')
+			for extension in $DATABASE_EXTENSIONS; do
+				echo "CREATE EXTENSION IF NOT EXISTS $extension CASCADE;" >> "$tfile"
+			done
+		fi
 	fi
 
 	# Create database and user
