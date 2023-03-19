@@ -87,6 +87,8 @@ RUN set -eux; \
 	patch -p1 < ../patches/unix_socket_directories.patch; \
 	\
 	export LLVM_CONFIG=/usr/lib/llvm$LLVM_VER/bin/llvm-config; \
+	# older clang versions don't have a 'clang' anymore.
+	export CLANG=clang-$LLVM_VER; \
 	\
 	pkgname=postgresql; \
 	_bindir=usr/bin; \
