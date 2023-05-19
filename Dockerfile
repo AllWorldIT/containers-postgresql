@@ -19,7 +19,7 @@
 # IN THE SOFTWARE.
 
 
-FROM registry.conarx.tech/containers/alpine/3.17 as builder
+FROM registry.conarx.tech/containers/alpine/3.18 as builder
 
 ENV POSTGRESQL_VER=15.2
 # This must ALSO be set below in the actual image build
@@ -87,6 +87,8 @@ RUN set -eux; \
 	patch -p1 < ../patches/unix_socket_directories.patch; \
 	\
 	export LLVM_CONFIG=/usr/lib/llvm$LLVM_VER/bin/llvm-config; \
+	# older clang versions don't have a 'clang' anymore.
+	export CLANG=clang-$LLVM_VER; \
 	\
 	pkgname=postgresql; \
 	_bindir=usr/bin; \
@@ -166,7 +168,7 @@ RUN set -eux; \
 
 
 
-FROM registry.conarx.tech/containers/alpine/3.17
+FROM registry.conarx.tech/containers/alpine/3.18
 
 
 ENV LLVM_VER=15
@@ -177,8 +179,8 @@ COPY --from=builder /build/postgresql-root /
 
 ARG VERSION_INFO=
 LABEL org.opencontainers.image.authors   "Nigel Kukard <nkukard@conarx.tech>"
-LABEL org.opencontainers.image.version   "3.17"
-LABEL org.opencontainers.image.base.name "registry.conarx.tech/containers/alpine/3.17"
+LABEL org.opencontainers.image.version   "3.18"
+LABEL org.opencontainers.image.base.name "registry.conarx.tech/containers/alpine/3.18"
 
 
 # 70 is the standard uid/gid for "postgres" in Alpine
