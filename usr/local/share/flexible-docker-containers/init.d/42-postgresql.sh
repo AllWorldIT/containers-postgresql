@@ -156,22 +156,22 @@ EOF
 		case "$f" in
 			*.sql)
 				fdc_notice "postgresql-initdb.d - Loading [$f]"
-				( sudo -u postgres psql ) < "$f"
+				( sudo -u postgres psql -v ON_ERROR_STOP=ON "$POSTGRES_DATABASE" ) < "$f"
 				echo
 				;;
 			*.sql.gz)
 				fdc_notice "postgresql-initdb.d - Loading [$f]"
-				gunzip -c "$f" | sudo -u postgres psql
+				gunzip -c "$f" | sudo -u postgres psql -v ON_ERROR_STOP=ON "$POSTGRES_DATABASE"
 				echo
 				;;
 			*.sql.xz)
 				fdc_notice "postgresql-initdb.d - Loading [$f]"
-				unxz -c "$f" | sudo -u postgres psql
+				unxz -c "$f" | sudo -u postgres psql -v ON_ERROR_STOP=ON "$POSTGRES_DATABASE"
 				echo
 				;;
 			*.sql.zst)
 				fdc_notice "postgresql-initdb.d - Loading [$f]"
-				unzstd -c "$f" | sudo -u postgres psql
+				unzstd -c "$f" | sudo -u postgres psql -v ON_ERROR_STOP=ON "$POSTGRES_DATABASE"
 				echo
 				;;
 			*)
