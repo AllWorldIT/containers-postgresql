@@ -21,7 +21,7 @@
 
 FROM registry.conarx.tech/containers/alpine/3.18 as builder
 
-ENV POSTGRESQL_VER=15.2
+ENV POSTGRESQL_VER=15.4
 # This must ALSO be set below in the actual image build
 ENV LLVM_VER=15
 
