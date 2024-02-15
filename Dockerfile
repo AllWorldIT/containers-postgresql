@@ -21,7 +21,7 @@
 
 FROM registry.conarx.tech/containers/alpine/edge as builder
 
-ENV POSTGRESQL_VER=15.4
+ENV POSTGRESQL_VER=16.2
 # This must ALSO be set below in the actual image build
 ENV LLVM_VER=15
 
@@ -85,6 +85,7 @@ RUN set -eux; \
 	patch -p1 < ../patches/perl-rpath.patch; \
 	patch -p1 < ../patches/remove-libecpg_compat.patch; \
 	patch -p1 < ../patches/unix_socket_directories.patch; \
+	patch -p1 < ../patches/icu-collations-hack.patch; \
 	\
 	export LLVM_CONFIG=/usr/lib/llvm$LLVM_VER/bin/llvm-config; \
 	# older clang versions don't have a 'clang' anymore.
