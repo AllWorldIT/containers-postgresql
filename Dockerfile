@@ -19,7 +19,7 @@
 # IN THE SOFTWARE.
 
 
-FROM registry.conarx.tech/containers/alpine/3.19 as builder
+FROM registry.conarx.tech/containers/alpine/3.20 as builder
 
 ENV POSTGRESQL_VER=16.3
 # This must ALSO be set below in the actual image build
@@ -169,7 +169,7 @@ RUN set -eux; \
 
 
 
-FROM registry.conarx.tech/containers/alpine/3.19
+FROM registry.conarx.tech/containers/alpine/3.20
 
 
 ENV LLVM_VER=15
@@ -180,8 +180,8 @@ COPY --from=builder /build/postgresql-root /
 
 ARG VERSION_INFO=
 LABEL org.opencontainers.image.authors   "Nigel Kukard <nkukard@conarx.tech>"
-LABEL org.opencontainers.image.version   "3.19"
-LABEL org.opencontainers.image.base.name "registry.conarx.tech/containers/alpine/3.19"
+LABEL org.opencontainers.image.version   "3.20"
+LABEL org.opencontainers.image.base.name "registry.conarx.tech/containers/alpine/3.20"
 
 
 # 70 is the standard uid/gid for "postgres" in Alpine
