@@ -165,7 +165,13 @@ RUN set -eux; \
 	chown -R pgsqltest:pgsqltest "postgresql-$POSTGRESQL_VER"; \
 	cd "postgresql-$POSTGRESQL_VER"; \
 	# Test
-	sudo -u pgsqltest make VERBOSE=1 check
+	if ! sudo -u pgsqltest make VERBOSE=1 check; then \
+		find src -name regression.diffs | while read -r file; do \
+			echo "=== test failure: $file ===" >&2; \
+			cat "$file" >&2; \
+		done; \
+		exit 1; \
+	fi
 #	sudo -u pgsqltest make VERBOSE=1 -j$(nproc) -l8 check MAX_CONNECTIONS=$(nproc)
 
 
