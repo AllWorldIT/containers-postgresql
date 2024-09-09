@@ -165,7 +165,8 @@ RUN set -eux; \
 	chown -R pgsqltest:pgsqltest "postgresql-$POSTGRESQL_VER"; \
 	cd "postgresql-$POSTGRESQL_VER"; \
 	# Test
-	sudo -u pgsqltest make VERBOSE=1 -j$(nproc) -l8 check MAX_CONNECTIONS=$(nproc)
+	sudo -u pgsqltest make VERBOSE=1 check
+#	sudo -u pgsqltest make VERBOSE=1 -j$(nproc) -l8 check MAX_CONNECTIONS=$(nproc)
 
 
 
