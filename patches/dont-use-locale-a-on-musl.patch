@@ -20,12 +20,12 @@ doesn't implement locales.
 
 --- a/src/backend/commands/collationcmds.c
 +++ b/src/backend/commands/collationcmds.c
-@@ -401,7 +401,7 @@
+@@ -579,7 +579,7 @@
  
  
  /* will we use "locale -a" in pg_import_system_collations? */
--#if defined(HAVE_LOCALE_T) && !defined(WIN32)
-+#if defined(HAVE_LOCALE_T) && !defined(WIN32) && defined(__GLIBC__)  // XXX-Patched
+-#if !defined(WIN32)
++#if !defined(WIN32) && defined(__GLIBC__)  // XXX-Patched
  #define READ_LOCALE_A_OUTPUT
  #endif
  

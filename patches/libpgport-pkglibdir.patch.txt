@@ -1,12 +1,13 @@
-Patch-Source: https://sources.debian.org/src/postgresql-14/14.0-1/debian/patches/libpgport-pkglibdir
+Patch-Source: https://sources.debian.org/data/main/p/postgresql-17/17.0-1/debian/patches/libpgport-pkglibdir
 Author: Christoph Berg <myon@debian.org>
 Description: Move libpgport/libpgcommon/libpgfeutils from libdir to pkglibdir
  This allows client applications to link to version-specific libraries.
  Used by pg-checksums.
+Forwarded: No, (somewhat) Debian specific
 
 --- a/src/common/Makefile
 +++ b/src/common/Makefile
-@@ -68,15 +68,15 @@ all: libpgcommon.a libpgcommon_shlib.a l
+@@ -125,15 +125,15 @@ distprep: kwlist_d.h
  
  # libpgcommon is needed by some contrib
  install: all installdirs
@@ -29,7 +30,7 @@ Description: Move libpgport/libpgcommon/libpgfeutils from libdir to pkglibdir
  	rm -f $@
 --- a/src/fe_utils/Makefile
 +++ b/src/fe_utils/Makefile
-@@ -35,13 +35,13 @@ distprep: psqlscan.c
+@@ -50,13 +50,13 @@ distprep: psqlscan.c
  
  # libpgfeutils could be useful to contrib, so install it
  install: all installdirs
@@ -48,7 +49,7 @@ Description: Move libpgport/libpgcommon/libpgfeutils from libdir to pkglibdir
  	rm -f libpgfeutils.a $(OBJS) lex.backup
 --- a/src/port/Makefile
 +++ b/src/port/Makefile
-@@ -54,15 +54,15 @@ all: libpgport.a libpgport_shlib.a libpg
+@@ -69,15 +69,15 @@ all: libpgport.a libpgport_shlib.a libpg
  
  # libpgport is needed by some contrib
  install: all installdirs
@@ -71,16 +72,7 @@ Description: Move libpgport/libpgcommon/libpgfeutils from libdir to pkglibdir
  	rm -f $@
 --- a/src/Makefile.global.in
 +++ b/src/Makefile.global.in
-@@ -599,7 +599,7 @@
- ifeq ($(PORTNAME),darwin)
- libpq_pgport = $(libpq)
- else ifdef PGXS
--libpq_pgport = -L$(libdir) -lpgcommon -lpgport $(libpq)
-+libpq_pgport = -L$(pkglibdir) -lpgcommon -lpgport $(libpq)
- else
- libpq_pgport = -L$(top_builddir)/src/common -lpgcommon -L$(top_builddir)/src/port -lpgport $(libpq)
- endif
-@@ -610,7 +610,7 @@
+@@ -607,7 +607,7 @@ libpq_pgport = $(libpq)
  # done if they don't, since they will have satisfied all their references
  # from these libraries.)
  ifdef PGXS
