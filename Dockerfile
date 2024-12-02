@@ -21,9 +21,9 @@
 
 FROM registry.conarx.tech/containers/alpine/3.20 as builder
 
-ENV POSTGRESQL_VER=16.3
+ENV POSTGRESQL_VER=17.2
 # This must ALSO be set below in the actual image build
-ENV LLVM_VER=15
+ENV LLVM_VER=18
 
 
 # Copy build patches
@@ -46,6 +46,7 @@ RUN set -eux; \
 		zstd-dev \
 		\
 		bison \
+		docbook-xsl-nons \
 		flex \
 		libxml2-dev \
 		linux-headers \
@@ -172,7 +173,7 @@ RUN set -eux; \
 FROM registry.conarx.tech/containers/alpine/3.20
 
 
-ENV LLVM_VER=15
+ENV LLVM_VER=18
 
 
 COPY --from=builder /build/postgresql-root /

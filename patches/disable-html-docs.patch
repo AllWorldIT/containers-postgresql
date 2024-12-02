@@ -6,19 +6,16 @@ HTML docs are big and they are available only anyway.
 
 --- a/doc/src/sgml/Makefile
 +++ b/doc/src/sgml/Makefile
-@@ -26,9 +26,9 @@
- include $(top_builddir)/src/Makefile.global
- 
- 
+@@ -16,7 +16,7 @@
+ # to want to use.
+ html:
+ # Note that all is *not* the default target in this directory
 -all: html man
 +all: man
  
--distprep: html distprep-man
-+distprep: distprep-man
- 
- 
- ifndef DBTOEPUB
-@@ -220,14 +220,14 @@
+ # We don't need the tree-wide headers or install support here.
+ NO_GENERATED_HEADERS=yes
+@@ -202,14 +202,14 @@
  ## Install
  ##
  
