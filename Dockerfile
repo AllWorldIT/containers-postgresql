@@ -21,9 +21,9 @@
 
 FROM registry.conarx.tech/containers/alpine/edge as builder
 
-ENV POSTGRESQL_VER=16.3
+ENV POSTGRESQL_VER=17.2
 # This must ALSO be set below in the actual image build
-ENV LLVM_VER=15
+ENV LLVM_VER=18
 
 
 # Copy build patches
@@ -46,6 +46,7 @@ RUN set -eux; \
 		zstd-dev \
 		\
 		bison \
+		docbook-xsl-nons \
 		flex \
 		libxml2-dev \
 		linux-headers \
@@ -165,14 +166,21 @@ RUN set -eux; \
 	chown -R pgsqltest:pgsqltest "postgresql-$POSTGRESQL_VER"; \
 	cd "postgresql-$POSTGRESQL_VER"; \
 	# Test
-	sudo -u pgsqltest make VERBOSE=1 -j$(nproc) -l8 check MAX_CONNECTIONS=$(nproc)
+	if ! sudo -u pgsqltest make VERBOSE=1 check; then \
+		find src -name regression.diffs | while read -r file; do \
+			echo "=== test failure: $file ===" >&2; \
+			cat "$file" >&2; \
+		done; \
+		exit 1; \
+	fi
+#	sudo -u pgsqltest make VERBOSE=1 -j$(nproc) -l8 check MAX_CONNECTIONS=$(nproc)
 
 
 
 FROM registry.conarx.tech/containers/alpine/edge
 
 
-ENV LLVM_VER=15
+ENV LLVM_VER=18
 
 
 COPY --from=builder /build/postgresql-root /
