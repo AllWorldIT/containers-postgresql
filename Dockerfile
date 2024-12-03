@@ -46,7 +46,7 @@ RUN set -eux; \
 		zstd-dev \
 		\
 		bison \
-		docbook-xsl-nons \
+		docbook-xsl \
 		flex \
 		libxml2-dev \
 		linux-headers \
