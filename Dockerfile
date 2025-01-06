@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2023, AllWorldIT.
+# Copyright (c) 2022-2025, AllWorldIT.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -19,7 +19,7 @@
 # IN THE SOFTWARE.
 
 
-FROM registry.conarx.tech/containers/alpine/3.20 as builder
+FROM registry.conarx.tech/containers/alpine/3.21 as builder
 
 ENV POSTGRESQL_VER=17.2
 # This must ALSO be set below in the actual image build
@@ -46,7 +46,7 @@ RUN set -eux; \
 		zstd-dev \
 		\
 		bison \
-		docbook-xsl \
+		docbook-xsl-nons \
 		flex \
 		libxml2-dev \
 		linux-headers \
@@ -166,11 +166,18 @@ RUN set -eux; \
 	chown -R pgsqltest:pgsqltest "postgresql-$POSTGRESQL_VER"; \
 	cd "postgresql-$POSTGRESQL_VER"; \
 	# Test
-	sudo -u pgsqltest make VERBOSE=1 -j$(nproc) -l8 check MAX_CONNECTIONS=$(nproc)
+	if ! sudo -u pgsqltest make VERBOSE=1 check; then \
+		find src -name regression.diffs | while read -r file; do \
+			echo "=== test failure: $file ===" >&2; \
+			cat "$file" >&2; \
+		done; \
+		exit 1; \
+	fi
+#	sudo -u pgsqltest make VERBOSE=1 -j$(nproc) -l8 check MAX_CONNECTIONS=$(nproc)
 
 
 
-FROM registry.conarx.tech/containers/alpine/3.20
+FROM registry.conarx.tech/containers/alpine/3.21
 
 
 ENV LLVM_VER=18
@@ -180,9 +187,9 @@ COPY --from=builder /build/postgresql-root /
 
 
 ARG VERSION_INFO=
-LABEL org.opencontainers.image.authors   "Nigel Kukard <nkukard@conarx.tech>"
-LABEL org.opencontainers.image.version   "3.20"
-LABEL org.opencontainers.image.base.name "registry.conarx.tech/containers/alpine/3.20"
+LABEL org.opencontainers.image.authors   = "Nigel Kukard <nkukard@conarx.tech>"
+LABEL org.opencontainers.image.version   = "3.21"
+LABEL org.opencontainers.image.base.name = "registry.conarx.tech/containers/alpine/3.21"
 
 
 # 70 is the standard uid/gid for "postgres" in Alpine
