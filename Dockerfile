@@ -166,6 +166,7 @@ RUN set -eux; \
 	chown -R pgsqltest:pgsqltest "postgresql-$POSTGRESQL_VER"; \
 	cd "postgresql-$POSTGRESQL_VER"; \
 	# Test
+	export LANG=C LC_ALL=C; \
 	if ! sudo -u pgsqltest make VERBOSE=1 check; then \
 		find src -name regression.diffs | while read -r file; do \
 			echo "=== test failure: $file ===" >&2; \
