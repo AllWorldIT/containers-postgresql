@@ -21,7 +21,7 @@
 
 FROM registry.conarx.tech/containers/alpine/edge as builder
 
-ENV POSTGRESQL_VER=17.2
+ENV POSTGRESQL_VER=17.4
 # This must ALSO be set below in the actual image build
 ENV LLVM_VER=18
 
