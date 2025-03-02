@@ -21,7 +21,7 @@
 
 FROM registry.conarx.tech/containers/alpine/edge as builder
 
-ENV POSTGRESQL_VER=17.2
+ENV POSTGRESQL_VER=17.4
 # This must ALSO be set below in the actual image build
 ENV LLVM_VER=18
 
@@ -166,6 +166,7 @@ RUN set -eux; \
 	chown -R pgsqltest:pgsqltest "postgresql-$POSTGRESQL_VER"; \
 	cd "postgresql-$POSTGRESQL_VER"; \
 	# Test
+	export LANG=C LC_ALL=C; \
 	if ! sudo -u pgsqltest make VERBOSE=1 check; then \
 		find src -name regression.diffs | while read -r file; do \
 			echo "=== test failure: $file ===" >&2; \
