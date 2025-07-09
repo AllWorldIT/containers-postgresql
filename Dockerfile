@@ -21,7 +21,7 @@
 
 FROM registry.conarx.tech/containers/alpine/3.22 as builder
 
-ENV POSTGRESQL_VER=17.4
+ENV POSTGRESQL_VER=17.5
 # This must ALSO be set below in the actual image build
 ENV LLVM_VER=18
 
@@ -188,9 +188,9 @@ COPY --from=builder /build/postgresql-root /
 
 
 ARG VERSION_INFO=
-LABEL org.opencontainers.image.authors   = "Nigel Kukard <nkukard@conarx.tech>"
-LABEL org.opencontainers.image.version   = "3.22"
-LABEL org.opencontainers.image.base.name = "registry.conarx.tech/containers/alpine/3.22"
+LABEL org.opencontainers.image.authors="Nigel Kukard <nkukard@conarx.tech>"
+LABEL org.opencontainers.image.version="3.22"
+LABEL org.opencontainers.image.base.name="registry.conarx.tech/containers/alpine/3.22"
 
 
 # 70 is the standard uid/gid for "postgres" in Alpine
@@ -203,7 +203,7 @@ RUN set -eux; \
 
 # make the "en_US.UTF-8" locale so postgres will be utf-8 enabled by default
 # alpine doesn't require explicit locale-file generation
-ENV LANG en_US.utf8
+ENV LANG=en_US.utf8
 
 RUN set -eux; \
 	true "PostgreSQL"; \
